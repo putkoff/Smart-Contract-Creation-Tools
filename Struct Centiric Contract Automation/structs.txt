@@ -1,0 +1,26 @@
+    struct PROTOstars {
+    	string name;
+	uint256 calcTime;
+	uint256 boostRewardsSec;
+	uint256 regLifeDecrease;
+	uint256 boostLifeDecrease;
+	uint256 rewards;
+	uint256 tempBoost;
+	uint256 regElapsed;
+	uint256 boostElapsed;
+	uint256 tempTotRewards;
+	uint256 TotalDecrease;
+    }
+    struct PENDING{
+	uint256 calcTime;
+	uint256 boostRewardsSec;
+	uint256 regLifeDecrease;
+	uint256 boostLifeDecrease;
+	uint256 rewards;
+	uint256 tempBoost;
+	uint256 regElapsed;
+	uint256 boostElapsed;
+	uint256 tempTotRewards;
+	uint256 TotalDecrease;
+    	
+    }
