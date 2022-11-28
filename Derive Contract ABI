@@ -1,0 +1,211 @@
+import json
+import os
+def reader(file):
+    with open(file, 'r') as f:
+        text = f.read()
+        return text
+def pen(paper, place):
+    with open(place, 'w') as f:
+        f.write(str(paper))
+        f.close()
+def changeGlob(x,v):
+    globals()[x] = v
+def readLinesSpec(x):
+    lsN = []
+    lines = x.split('\n')
+    for i in range(0,len(lines)):
+        lines[i] = eatOuterMod(lines[i],['\n','\t',' ','']).replace('\n','')
+        if lines[i] not in ['\n',' \n','',' ','\t']  and len(str(eatAllMod(lines[i],['\n','\t',' ','/',';','']))) != 0:
+            lsN.append(lines[i]+'\n')
+    return lsN
+def lsChangeGlob(x,y):
+    for i in range(0,len(x)):
+        changeGlob(x[i],y[i])
+
+def adSt(x,y):
+    return str(x)+str(y)
+def lsCheck(x,ls):
+    for i in range(0,len(ls)):
+        if x == ls[i]:
+            return True
+    return False
+def currIs(x,ls):
+    for i in range(0,len(ls)):
+        if x[:len(ls[i])] == ls[i]:
+            return x[len(ls[i]):]
+    return False
+def currIsNeg(x,ls):
+    for i in range(0,len(ls)):
+        if x[len(x)-len(ls[i]):] == ls[i]:
+            return x[:len(x)-len(ls[i])] 
+    return False
+def eatInner(x,ls):
+    z = x
+    for i in range(0,len(x)):
+        if currIs(z,ls) == False:
+            return z
+        else:
+            z = currIs(z,ls)
+    return z
+def eatOuter(x,ls):
+    z = x
+    for i in range(0,len(x)):
+        if currIsNeg(z,ls) == False:
+
+            return z
+        else:
+            z = currIsNeg(z,ls)
+
+    return z
+def eatAll(x,ls):
+    y = eatInner(x,ls)
+    z = eatOuter(y,ls)
+    return z
+def countIt(x,y):
+    if y in x:
+        return int((len(x)-len(x.replace(y,'')))/len(y))
+    return int(0)
+def getEnclosed(x,ls):
+    if type(x) is not list:
+        x = [x]
+    z = ''
+    lsN = []
+    countLs = [int(0),int(0)]
+    for i in range(0,len(x)):
+        line = x[i]
+        zN = ''
+        for j in range(0,len(line)):
+            li = line[j]
+            zN = zN+li
+            if li in ls:
+                if countLs[0] == 0:
+                    z = ls[0]
+                    
+                    lsN = []
+                countLs[findIt(li,ls)] += 1
+                if countLs[0] == countLs[1]:
+                    lsN.append(zN)
+                    z = z + zN
+                    return lsN,z
+        z = z + zN
+        lsN.append(line)
+    
+def findIt(x,ls):
+    for i in range(0,len(ls)):
+        if x == ls[i]:
+            return i
+    return False
+def getBrackDiff():
+    return lsBrack[0]-lsBrack[1]
+def trackTabs(x):
+    ls = ['{','}']
+    found = findIt(x,['{','}'])
+    if found != False:
+        lsBrack[found] += 1
+        lsBrack[2] = getAsMany('\t',getBrackDiff())
+def getAsMany(x,k):
+    z = ''
+    for i in range(0,k):
+        z = adSt(z,x)
+    return z
+def getCurr(ls):
+    if len(ls) >0:
+        return ls[-1]
+    return None
+def removeFirst(x,y):
+    if y in x:
+        return x.replace(x.split(y)[0]+y,''),x.split(y)[0]
+    return '',x
+def checkSyntax(x):
+    names = syntax['names']
+    for i in range(0,len(names)):
+            name = names[i]
+            for j in range(0,len(syntax[name])):
+                now = syntax[name][j]
+                if x == now:
+                    return name
+    return False
+def checkNames(x):
+    ls = ['interface','abstract','library','contract']
+    for i in range(0,len(ls)):
+        if 'names' not in lineTrack:
+            lineTrack[ls[i]] = {'names':[]}
+        if x in lineTrack[ls[i]]['names']:
+            return ls[i]
+    return False
+def checkDeclared(x):
+    if x in lineTrack['declared']:
+        return True
+    return False
+def linesToString(ls):
+    all = ''
+    for i in range(0,len(ls)):
+        all = all + ls[i]
+    return all
+def ifThenApp(ls,x):
+   if type(ls) is list:
+      ls.append(x)
+      return ls
+   ls = x
+   return ls
+      
+def ifThenGive(li,lsN):
+   heads = ['contract','abstract','interface','library','constructor']
+   jsN = {'type':'','name':'','inputs':[],'stateMutability':'public',"modifiers":"nonPayable",'outputs':[]}
+   js = {"names":["type","designation","stateMutability","modifiers","designation"],
+         "type":['constructor','modifier','using','function','struct','mapping','contract','abstract contract','interface','library'],
+         "designation":["address","uint","string","bytes",'bool'],
+         "stateMutability":["public","private","external","internal"],
+         "modifiers":["pure","view","payable","constant","anonymous","indexed"],
+         "designation":["address","uint","string","bytes",'bool']}
+   names = js["names"]
+   cou = [0,0,0]
+   st = 'inputs'
+   if ' is ' in li:
+        jsN['attributes'] = li.split(' is ')[1].split('{')[0].replace(' ','').split(',')
+   x = li.split(' ')
+   if x[0] in js["type"]:
+      jsN["type"] = x[0]
+      jsN['name'] = x[1].split('(')[0]
+      for i in range(1,len(x)):
+            n = x[i]
+            if '(' in n and '()' not in n:
+               jsN[st].append({'type':n.split('(')[1],'name':''})
+               n = n.replace('('+n.split('(')[1],'')
+            if ')' in n and '()' not in n:
+               jsN[st][-1]['name'] = n.split(')')[0]
+               n = n.replace(n.split(')')[0]+')','')
+               st = 'outputs'
+            if ',' in n and len(jsN[st]) >0:
+               jsN[st][-1]['name'] = n.split(',')[0]
+               jsN[st].append({'type':n.split(',')[1],'name':""})
+               n = ''
+            for k in range(0,len(names)):
+               na = names[k]
+               if n in js[na]:
+                  if na == js['type']:
+                     jsN['type'] = n
+                     
+               
+      lsN.append(jsN)
+   return lsN
+changeGlob("syntax",{ "names":["type","modifiers","visibility","precedence","globalVariables","precedence"],
+                     "view":["pure","view","payable","constant","immutable","anonymous","indexed","virtual","override"],
+                     "precedence":["assert","block","coinbase","difficulty","number","block;number","timestamp","block;timestamp","msg","data","gas","sender","value","gas price","origin","revert","require","keccak256","ripemd160","sha256","ecrecover","addmod","mulmod","cryptography","this","super","selfdestruct","balance","codehash","send"],
+                     "stateMutability":["public","private","external","internal"],
+                     "modifiers":["pure","view","payable","constant","anonymous","indexed"],
+                     "globalVariables":['abi.decode(bytes memory encodedData, (...)) returns (...)', 'abi.encode(...) returns (bytes memory)', 'abi.encodePacked(...) returns (bytes memory)',  'abi.encodeWithSelector(bytes4 selector, ...) returns (bytes memory)', 'abi.encodeCall(function functionPointer, (...)) returns (bytes memory)','abi.encodeWithSelector(functionPointer.selector, (...))', 'abi.encodeWithSignature(string memory signature, ...) returns (bytes memory)', 'to abi.encodeWithSelector(bytes4(keccak256(bytes(signature)), ...)', 'bytes.concat(...) returns (bytes memory)', 'arguments to one byte array<bytes-concat>`', 'string.concat(...) returns (string memory)', 'arguments to one string array<string-concat>`', 'block.basefee (uint)', 'block.chainid (uint)', 'block.coinbase (address payable)', 'block.difficulty (uint)', 'block.gaslimit (uint)', 'block.number (uint)', 'block.timestamp (uint)', 'gasleft() returns (uint256)', 'msg.data (bytes)', 'msg.sender (address)', 'msg.sig (bytes4)', 'msg.value (uint)', 'tx.gasprice (uint)', 'tx.origin (address)', 'assert(bool condition)', 'require(bool condition)', 'for malformed input or error in external component)', 'require(bool condition, string memory message)', 'condition is false (use for malformed input or error in external component). Also provide error message.', 'revert()', 'revert(string memory message)', 'blockhash(uint blockNumber) returns (bytes32)', 'keccak256(bytes memory) returns (bytes32)', 'sha256(bytes memory) returns (bytes32)', 'ripemd160(bytes memory) returns (bytes20)', 'ecrecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) returns (address)', 'the public key from elliptic curve signature, return zero on error', 'addmod(uint x, uint y, uint k) returns (uint)', 'arbitrary precision and does not wrap around at 2**256. Assert that k != 0 starting from version 0.5.0.', 'mulmod(uint x, uint y, uint k) returns (uint)', 'with arbitrary precision and does not wrap around at 2**256. Assert that k != 0 starting from version 0.5.0.', "this (current contract's type)", 'super', 'selfdestruct(address payable recipient)', '<address>.balance (uint256)', '<address>.code (bytes memory)', '<address>.codehash (bytes32)', '<address payable>.send(uint256 amount) returns (bool)', 'returns false on failure', '<address payable>.transfer(uint256 amount)', 'type(C).name (string)', 'type(C).creationCode (bytes memory)', 'type(C).runtimeCode (bytes memory)', 'type(I).interfaceId (bytes4)', 'type(T).min (T)', 'type(T).max (T)'],"sectionHeader":['contract','library','interface','abstract contract'],"allVars":['contract','library','pragma solidity','import','interface','abstract contract','constructor','function','modify','SPDX-License-Identifier'],
+                     "designation":["address","uint","string","bytes",'bool']})
+                     
+
+global defs
+defs = {}
+defs['heads']=['contract','abstract contract','interface','library']
+defs['subHeads']=['constructor','modifier','using','function','struct','mapping']
+lines = reader('NeFiFeeManager.sol').replace('\n','').replace('{','{\n').replace('}','}\n').replace(' ,',',').replace(', ',',').replace(';',';\n').split('\n')
+lsN = []
+for i in range(0,len(lines)):
+   n = eatAll(lines[i],[' ','\\','\n','\t'])
+   lsN = ifThenGive(n,lsN)
+for i in range(0,len(lsN)):
+    print(lsN[i])
